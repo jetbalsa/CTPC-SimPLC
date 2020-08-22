@@ -1,0 +1,89 @@
+COMMUNICATIONS	
+
+"WEP" - Water Electric Protocol
+
+1) If you seen "Invaild" data within a ruleset defined, it crashes
+2) if it crashes X times within X Seconds PLC IS DEAD
+3) Randomly drops packets. All coms should receive a response, if its invaild, send it again!
+4) MASTER KEY FOR CHKSUM [5,7,2,7,14,14,12,15,7,7,12,8,0,6,1,10,10,13,1,6,15,13,11,11,11,5,1,12,4,12,3,1,5,9,11,6,15,15,12,8,15,8,13,0,0,14,2,8,2]
+
+RECEIVER
+-----------------
+
+-STX (3 1s)
+START BIT ACTION	1 bit is this message requesting data or state from port, 1 will be to read, and 0 to set
+-PARITY
+PORT				PORT NUMBER TO POLL 4 bits, every port will have a state that can be read, if a sensor is written to, its a failure or nop
+PORT
+PORT
+PORT
+-PARITY
+ACTION				Action value will be gate hight 4 bits, open close (like 0 is close and 15 is open, flip logic randomly of course)
+ACTION
+ACTION
+ACTION
+-PARITY
+RAND				MFG Bits, these will be randomly set, not read by PLC
+RAND
+RAND
+RAND
+-PARITY
+RAND
+RAND
+RAND
+RAND
+-PARITY
+CHKSUM				checksum of everything above but without the PARITY
+CHKSUM
+CHKSUM
+CHKSUM
+-ETX (3 0s)
+
+
+SENDER
+-----------------
+
+-STX (3 0s)
+MESSAGE TYPE BIT	This bit will be 1 for something flipped, or 0 for something read
+-PARITY
+PORT				Port number the response is referancing 
+PORT
+PORT
+PORT
+-PARITY
+SIGN VALUE BIT		0 for negitive 1 for postive
+NUMBER				7 bit number for return, 0-126, for true false readings, it will be randomly between 0-40 to 60-127
+NUMBER
+NUMBER
+NUMBER
+NUMBER
+NUMBER
+NUMBER
+DEC SIGN?			0 for yes, 1 for end of number, rest of value will be randomly filled from "memory" for the next 7 bits
+-PARITY
+NUMBER				after the dec, 7 bit number is 0-99
+NUMBER
+NUMBER
+NUMBER
+NUMBER
+NUMBER
+NUMBER
+-PARITY
+MFG				6 bit number not used? Yet...
+MFG
+MFG
+MFG
+MFG
+MFG
+-PARITY
+CHKSUM				checksum of everything above but without the PARITY
+CHKSUM
+CHKSUM
+CHKSUM
+-ETX (3 1s)
+
+
+
+
+
+

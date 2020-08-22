@@ -156,7 +156,7 @@ function data_writer($action, $port, $value, $mfg1, $mfg2){
     global $fourbit;
     //sane check
     if($value > 15 ){
-        logwrite("ERROR: $value > 15");
+        logme("ERROR: $value > 15");
         return false;
     }
     logme("Writing: action: $action, Port: $port, Number: $value, Mfg1: $mfg1, Mfg2: $mfg2");

@@ -186,7 +186,11 @@ for ($x = 0; $x <= 100; $x++) {
         $data = data_writer("1", "0000", floor(rand(0, 15)), "1111", "1111");
         fwrite($fp, $data);
         while (!feof($fp)) {
-            data_reader(fgets($fp, 6));
+            $data = data_reader(fgets($fp, 6));
+            echo json_encode($data);
+            if($data === FALSE){
+                die("BAD DATA AHHHHHHHHH");
+            }
             break;
         }
         fclose($fp);

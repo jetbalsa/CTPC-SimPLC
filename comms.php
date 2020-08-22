@@ -73,6 +73,10 @@ function data_reader($data)
     global $fourbit;
     //monkey patch to fix padding issues
     $data = "000".base_convert(bin2hex($data), 16, 2);
+    if(strlen($data) !== 40){
+        logme("Bad Data Len " . strlen($data) . " !== 40");
+        return false;
+    }
     $data = substr($data, 0, 42);
     logme("Reading Data : $data");
     //check if header bits exist
@@ -174,15 +178,17 @@ function data_writer($action, $port, $value, $mfg1, $mfg2){
 
 }
 
-
-$fp = fsockopen("jrwr.io", 2023, $errno, $errstr, 30);
-if (!$fp) {
-    logme("TCP: $errstr");
-} else {
-    $data = data_writer("1", "0000", floor(rand(0,15)), "1111", "1111");
-    fwrite($fp, $data);
-    while (!feof($fp)) {
-        data_reader(fgets($fp, 6));
+for ($x = 0; $x <= 100; $x++) {
+    $fp = fsockopen("jrwr.io", 2023, $errno, $errstr, 30);
+    if (!$fp) {
+        logme("TCP: $errstr");
+    } else {
+        $data = data_writer("1", "0000", floor(rand(0, 15)), "1111", "1111");
+        fwrite($fp, $data);
+        while (!feof($fp)) {
+            data_reader(fgets($fp, 6));
+            break;
+        }
+        fclose($fp);
     }
-    fclose($fp);
 }

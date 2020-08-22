@@ -72,7 +72,7 @@ function data_reader($data)
     global $enckey;
     global $fourbit;
     //monkey patch to fix padding issues
-    $data = "000".$data;
+    $data = "000".base_convert(bin2hex($data), 16, 2);
     $data = substr($data, 0, 42);
     logme("Reading Data : $data");
     //check if header bits exist
@@ -161,20 +161,28 @@ function data_writer($action, $port, $value, $mfg1, $mfg2){
     }
     logme("Writing: action: $action, Port: $port, Number: $value, Mfg1: $mfg1, Mfg2: $mfg2");
     //calc checksum
-    $chkstring = "111" . $action . $port . sprintf("%04b",$value) . $mfg1 . $mfg2;
+    $chkstring = "111" . $action . $port . (string) sprintf("%04b",$value) . $mfg1 . $mfg2;
     $countchk = substr_count($chkstring, '1');
     $truechksum = $enckey[$countchk];
     $chksum = sprintf("%04b", $truechksum);
     logme("Chksum:  $chksum | $countchk | $truechksum");
     //make final output
-    $output = "111" . calcpar($action) . calcpar($port) . calcpar(sprintf("%04b",$value)) . calcpar($mfg1) . calcpar($mfg2) . $chksum . "00000000000";
+    logme("Value: ". (string) sprintf("%04b",$value));
+    $output = "111" . calcpar($action) . calcpar($port) . calcpar((string) sprintf("%04b",$value)) . calcpar($mfg1) . calcpar($mfg2) . $chksum . "00000000000";
     if(strlen($output) !== 40){logme("Output too short! Something is wrong with your inputs!");}
-    return $output;
+    return pack('H*', base_convert($output, 2, 16));
 
 }
-$input = base_convert(bin2hex(fread(STDIN, 6)), 16, 2);
-var_dump(data_reader($input));
 
-$data = data_writer("1", "1011", 6, "1111", "1111");
-fwrite(STDOUT, pack('H*', base_convert($data, 2, 16)));
 
+$fp = fsockopen("jrwr.io", 2023, $errno, $errstr, 30);
+if (!$fp) {
+    logme("TCP: $errstr");
+} else {
+    $data = data_writer("1", "0000", floor(rand(0,15)), "1111", "1111");
+    fwrite($fp, $data);
+    while (!feof($fp)) {
+        data_reader(fgets($fp, 6));
+    }
+    fclose($fp);
+}

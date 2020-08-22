@@ -22,7 +22,7 @@ $fourbit = [
 ];
 
 
-
+readline_callback_handler_install('', function(){});
 //checks the par, give it data and the par bit in string binary
 function checkpar($data, $par)
 {
@@ -61,7 +61,7 @@ function calcpar($data)
 function logme($line)
 {
     $date = date(DATE_ATOM);
-    echo "[$date]> $line" . PHP_EOL;
+    fwrite(STDERR, "[$date]> $line" . PHP_EOL);
 }
 
 
@@ -71,6 +71,8 @@ function data_reader($data)
 {
     global $enckey;
     global $fourbit;
+    //monkey patch to fix padding issues
+    $data = "000".$data;
     $data = substr($data, 0, 42);
     logme("Reading Data : $data");
     //check if header bits exist
@@ -170,5 +172,9 @@ function data_writer($action, $port, $value, $mfg1, $mfg2){
     return $output;
 
 }
+$input = base_convert(bin2hex(fread(STDIN, 6)), 16, 2);
 var_dump(data_reader($input));
-var_dump(data_writer("1", "1011", 6, "1111", "1111"));
+
+$data = data_writer("1", "1011", 6, "1111", "1111");
+fwrite(STDOUT, pack('H*', base_convert($data, 2, 16)));
+

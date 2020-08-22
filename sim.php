@@ -4,9 +4,9 @@
 /// 111 1 1 1011 1 1100 1 1110 1 1110
 ///  STX R P 0 0 RND P RND P CHK ETX
 // Reads from Port 0, Sending Zeros, with a checksum of 12
-
+readline_callback_handler_install('', function(){});
 //STATIC VALUES
-//$input = str_replace(' ', '', "1111110111011001111011110100100000000000");
+///$input = str_replace(' ', '', "1111110111011001111011110100100000000000");
 $enckey = [0, 9, 15, 14, 8, 2, 0, 7, 12, 3, 15, 13, 8, 5, 13, 1, 9, 9, 0, 8, 12, 13, 8, 2, 11, 1, 7, 11, 8, 12, 4, 15, 12, 14, 1, 7, 10, 6, 7, 12, 4, 8, 15, 0, 6, 2, 12, 10, 9, 14, 0, 13, 14, 12, 15, 0, 13, 0, 14, 15, 15, 13, 5, 0, 13, 9, 4, 8, 3, 12, 6, 6, 10, 14, 14, 8, 14, 1, 1, 8, 2, 12, 8, 4, 0, 7, 3, 9, 3, 12, 5, 5, 2, 0, 14, 7, 8, 15, 15, 7, 13, 5, 8, 8, 13, 11, 9, 13, 3, 15, 3, 13, 3, 3, 11, 12, 2, 9, 7, 15, 9, 3, 11, 0, 8, 6, 2, 1, 5]; // done with a D16 Dice but I substraced by one for everything
 $fourbit = [
     "0000" => 0,
@@ -155,7 +155,7 @@ function write_data($type, $port, $number, $mfg1)
         simcrash("LOGIC ERROR, TRIED TO WRITE $mfg1 > 15");
         return false;
     }
-    $output = "000" . calcpar($type) . calcpar($port);
+    $output = "00000" . calcpar($type) . calcpar($port);
 
     //calc number output
     if ($number < 0) {

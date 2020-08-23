@@ -145,7 +145,7 @@ function data_reader($data)
     $countchk = substr_count($chkstring, '1');
     $truechksum = $enckey[$countchk];
     if ($truechksum == bindec(substr($data, 35, 4))) {
-        logme("Good Checksum! Data OK!");
+        //logme("Good Checksum! Data OK!");
         $output = ["port" => $port, "action" => $actionbit, "value" => $decoded_value, "mfg" => $mfg];
         return $output;
     } else {
@@ -163,34 +163,33 @@ function data_writer($action, $port, $value, $mfg1, $mfg2){
         logme("ERROR: $value > 15");
         return false;
     }
-    logme("Writing: action: $action, Port: $port, Number: $value, Mfg1: $mfg1, Mfg2: $mfg2");
+    //logme("Writing: action: $action, Port: $port, Number: $value, Mfg1: $mfg1, Mfg2: $mfg2");
     //calc checksum
     $chkstring = "111" . $action . $port . (string) sprintf("%04b",$value) . $mfg1 . $mfg2;
     $countchk = substr_count($chkstring, '1');
     $truechksum = $enckey[$countchk];
     $chksum = sprintf("%04b", $truechksum);
-    logme("Chksum:  $chksum | $countchk | $truechksum");
+    //logme("Chksum:  $chksum | $countchk | $truechksum");
     //make final output
-    logme("Value: ". (string) sprintf("%04b",$value));
+    //logme("Value: ". (string) sprintf("%04b",$value));
     $output = "111" . calcpar($action) . calcpar($port) . calcpar((string) sprintf("%04b",$value)) . calcpar($mfg1) . calcpar($mfg2) . $chksum . "00000000000";
     if(strlen($output) !== 40){logme("Output too short! Something is wrong with your inputs!");}
     return pack('H*', base_convert($output, 2, 16));
 
 }
 
-for ($x = 0; $x <= 100; $x++) {
-    $fp = fsockopen("jrwr.io", 2023, $errno, $errstr, 30);
+for ($x = 0; $x <= 15; $x++) {
+    $fp = fsockopen("127.0.0.1", 2023, $errno, $errstr, 30);
     if (!$fp) {
         logme("TCP: $errstr");
     } else {
-        $data = data_writer("1", "0000", floor(rand(0, 15)), "1111", "1111");
+        echo PHP_EOL."=========== reading from port $x".PHP_EOL;
+        $data = data_writer("1", (string) sprintf("%04b",$x), floor(rand(0, 15)), "1111", "1111");
         fwrite($fp, $data);
         while (!feof($fp)) {
             $data = data_reader(fgets($fp, 6));
-            echo json_encode($data);
-            if($data === FALSE){
-                die("BAD DATA AHHHHHHHHH");
-            }
+            echo PHP_EOL.json_encode($data).PHP_EOL;
+            continue;
             break;
         }
         fclose($fp);

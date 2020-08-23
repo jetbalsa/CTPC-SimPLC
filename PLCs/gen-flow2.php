@@ -1,8 +1,8 @@
 #!/usr/bin/php
 <?php
-$plcname = "DAM-GENFLOW-1";
+$plcname = "DAM-GENFLOW-2";
 require "template.php";
-/// DAM POWER GENERATORS WATER FLOW INLET #1
+/// DAM POWER GENERATORS WATER FLOW INLET #2
 /// READINGS RETURN MILLIONS OF GALLONS PER MINUTE.
 /// 
 /// PORT 0000 - INLET FOR MILLIONS OF GALLONS PER SECOND
@@ -12,8 +12,8 @@ require "template.php";
 //////////////////////////////////////////
 /// MEMCACHE KEYS
 /////////////////////////////////////////
-/// DAM-GENFLOW1 = MGPM RATE INLET FOR GEN1
-/// DAM-GENFLOW1-GATE = CURRENT POSTION OF GATE 1-10
+/// DAM-GENFLOW2 = MGPM RATE INLET FOR GEN1
+/// DAM-GENFLOW2-GATE = CURRENT POSTION OF GATE 1-10
 ////////////////////////////////////////
 
 logme("===== STARTUP =====");
@@ -31,17 +31,17 @@ function process_logic($input)
             switch ($res["port"]) {
                 case "0000":
 
-                        $flowrate = $m->get('DAM-GENFLOW1');
+                        $flowrate = $m->get('DAM-GENFLOW2');
                         if (empty($flowrate)) {
                             //empty lake, lets refill it!
-                            $m->set('DAM-GENFLOW1', 2.15);
+                            $m->set('DAM-GENFLOW2', 2.15);
                             $flowrate = 2.15;
-                            logme('Memcache DAM-GENFLOW1 Empty, retin to 2.15mGPM');
+                            logme('Memcache DAM-GENFLOW2 Empty, retin to 2.15mGPM');
                         }
-                        logme('Sending DAM-GENFLOW1 of ' . $flowrate);
+                        logme('Sending DAM-GENFLOW2 of ' . $flowrate);
                         //crash on invaild data
                         if ($res["value"] !== "0000") {
-                            simcrash("Invaild Value for Reading DAM-GENFLOW1, CRASHING!");
+                            simcrash("Invaild Value for Reading DAM-GENFLOW2, CRASHING!");
                             break;
                         }
                         ///write_data($type, $port, $number, $mfg1)
@@ -50,13 +50,13 @@ function process_logic($input)
                     break;
                     case "0100":
 
-                        $gatepos = $m->get('DAM-GENFLOW1-GATE');
+                        $gatepos = $m->get('DAM-GENFLOW2-GATE');
                         if (empty($gatepos)) {
                             //alarm not set, setting to OFF
-                            $m->set('DAM-GENFLOW1-GATE', 2);
-                            logme('resetting DAM-GENFLOW1-GATE to 20%');
+                            $m->set('DAM-GENFLOW2-GATE', 2);
+                            logme('resetting DAM-GENFLOW2-GATE to 20%');
                         }
-                        logme('Sending DAM-GENFLOW1-GATE Status ' . $gatepos);
+                        logme('Sending DAM-GENFLOW2-GATE Status ' . $gatepos);
                         $data = write_data("1", "0100", $gatepos, 0);
                         fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                     break;
@@ -73,17 +73,17 @@ function process_logic($input)
         if ($res["act"] === "0") {
             switch ($res["port"]) {
                     case "0000":
-                        logme("DAM-GENFLOW1-GATE to ".$res["value"]);
+                        logme("DAM-GENFLOW2-GATE to ".$res["value"]);
                         if ($res["value"] === "0000") {
-                            simcrash("Invaild Value for DAM-GENFLOW1-GATE");
+                            simcrash("Invaild Value for DAM-GENFLOW2-GATE");
                             break;
                         }
                         if (bindec($res["value"]) > 10) {
-                            simcrash("Invaild Value for DAM-GENFLOW1-GATE");
+                            simcrash("Invaild Value for DAM-GENFLOW2-GATE");
                             break;
                         }
-                        logme("Setting DAM-GENFLOW1-GATE to " . bindec($res["value"]) . "0%");
-                        $m->set('DAM-GENFLOW1-GATE', bindec($res["value"]));
+                        logme("Setting DAM-GENFLOW2-GATE to " . bindec($res["value"]) . "0%");
+                        $m->set('DAM-GENFLOW2-GATE', bindec($res["value"]));
                         $data = write_data("0", $res["port"], bindec($res["value"]), 0);
                         fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                     break;

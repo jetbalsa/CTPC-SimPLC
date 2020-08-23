@@ -63,8 +63,9 @@ function simcrash($text)
 }
 function logme($line)
 {
+    global $plcname;
     $date = date(DATE_ATOM);
-    fwrite(STDERR, "[$date]> $line" . PHP_EOL);
+    fwrite(STDERR, "[$plcname][$date]> $line" . PHP_EOL);
 }
 
 function read_data($data)
@@ -168,7 +169,7 @@ function write_data($type, $port, $number, $mfg1)
 
     $explodingnumbers = explode(".", $number);
     $binnumwhole = sprintf("%07b", abs($explodingnumbers[0]));
-    logme("Wholenumberbin: $binnumwhole");
+    //logme("Wholenumberbin: $binnumwhole");
     if (!empty($explodingnumbers[1])) {
         $binnumnotwhole = sprintf("%07b", substr($explodingnumbers[1], 0, 2));
         $dec = "0";
@@ -178,17 +179,17 @@ function write_data($type, $port, $number, $mfg1)
         $dec = "1";
         $output .= calcpar($binnumwhole . $dec) . calcpar($binnumnotwhole);
     }
-    logme("Wholenumberbin: $dec $binnumnotwhole");
+    //logme("Wholenumberbin: $dec $binnumnotwhole");
     //mfg code
     $output .= calcpar(sprintf("%06b", $mfg1));
-    logme("Mfg1binnum: " . sprintf("%06b", $mfg1));
+    //logme("Mfg1binnum: " . sprintf("%06b", $mfg1));
 
     $chkstring = "000" . $type . $port . $sign . $binnumwhole . $dec . $binnumnotwhole . sprintf("%06b", $mfg1);
     //chksum calc
     $count = substr_count($chkstring, '1');
     $truechksum = $enckey[(int) $count];
-    logme("Chkv $truechksum");
+    //logme("Chkv $truechksum");
     $output .= sprintf("%04b", $truechksum). "111000000";
-    logme("Data Sent: $output");
+    //logme("Data Sent: $output");
     return $output;
 }

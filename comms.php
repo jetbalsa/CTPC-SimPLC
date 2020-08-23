@@ -184,7 +184,7 @@ for ($x = 0; $x <= 15; $x++) {
         logme("TCP: $errstr");
     } else {
         echo PHP_EOL."=========== reading from port $x".PHP_EOL;
-        $data = data_writer("1", (string) sprintf("%04b",$x), floor(rand(0, 15)), "1111", "1111");
+        $data = data_writer("0", (string) sprintf("%04b",$x), floor(rand(0, 10)), "1111", "1111");
         fwrite($fp, $data);
         while (!feof($fp)) {
             $data = data_reader(fgets($fp, 6));

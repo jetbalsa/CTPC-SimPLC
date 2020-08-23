@@ -1,5 +1,6 @@
 #!/usr/bin/php
 <?php
+$plcname = "DAM-LAKELEVEL";
 require "template.php";
 /// DAM LAKE LEVEL SENSOR AND ALARM
 /// READING DATA RETURNS DATA IN FEET OF CALIBRATED LAKE LEVEL
@@ -121,25 +122,42 @@ function process_logic($input)
                         logme("Setting LAKE_ALARM_1 to ".$res["value"]);
                         if ($res["value"] === "0000") {
                             $m->set('LAKE_ALARM_1', "OFF");
+                            $data = write_data("0", $res["port"], 0, 0);
+                            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                         } else {
                             $m->set('LAKE_ALARM_1', "ON");
+                            $data = write_data("0", $res["port"], floor(rand(5, 10)), 0);
+                            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                         }
                     break;
                     case "0010":
                         logme("Setting LAKE_ALARM_2 to ".$res["value"]);
                         if ($res["value"] === "0000") {
                             $m->set('LAKE_ALARM_2', "OFF");
+                            $data = write_data("0", $res["port"], 0, 0);
+                            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                         } else {
                             $m->set('LAKE_ALARM_2', "ON");
+                            $data = write_data("0", $res["port"], floor(rand(5, 10)), 0);
+                            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                         }
                     break;
                     case "0001":
                         logme("Setting LAKE_ALARM_BYPASS to ".$res["value"]);
                         if ($res["value"] === "0000") {
                             $m->set('LAKE_ALARM_BYPASS', "OFF");
+                            $data = write_data("0", $res["port"], 0, 0);
+                            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                         } else {
                             $m->set('LAKE_ALARM_BYPASS', "ON");
+                            $data = write_data("0", $res["port"], floor(rand(5, 10)), 0);
+                            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                         }
+                    break;
+                    default:
+                        logme('Sending Unused Port ' . $res["port"]. " false data");
+                        $data = write_data("0", $res["port"], floor(rand(5, 100)), 0);
+                        fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
                     break;
             }
             return true;

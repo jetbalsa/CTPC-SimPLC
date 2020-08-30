@@ -1,0 +1,33 @@
+version: "3.8"
+services:
+  memcached:
+    image: memcached:1.6-alpine
+    ports:
+      - "11211"
+    networks:
+      - memcached
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  plc:
+    image: .
+    ports:
+      - "5502:502"
+    networks:
+      - memcached
+      - public
+    depends_on:
+      - memcached
+    environment:
+      - CONTAINER_SIMULATION="lake-level"
+      - CONTAINER_MEMCACHED_ADDR="memcached"
+#      - CONTAINER_SYSLOGDEST="182.22.122.112"
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+
+networks:
+  memcached:
+  public:

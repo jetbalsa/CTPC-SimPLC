@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.2"
 services:
   memcached:
     image: memcached:1.6-alpine
@@ -9,11 +9,51 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-
-  plc:
-    image: .
+  plc_gen_flow_1:
+    image: plc:latest
     ports:
-      - "5502:502"
+      - target: 5502
+        published: 5551
+        protocol: tcp
+        mode: host
+    networks:
+      - memcached
+      - public
+    depends_on:
+      - memcached
+    environment:
+      - CONTAINER_SIMULATION="gen-flow-1"
+      - CONTAINER_MEMCACHED_ADDR="memcached"
+      - CONTAINER_SYSLOGDEST="SETME"
+    deploy:
+      restart_policy:
+        condition: on-failure
+  plc_gen_flow_2:
+    image: plc:latest
+    ports:
+      - target: 5502
+        published: 5552
+        protocol: tcp
+        mode: host
+    networks:
+      - memcached
+      - public
+    depends_on:
+      - memcached
+    environment:
+      - CONTAINER_SIMULATION="gen-flow-2"
+      - CONTAINER_MEMCACHED_ADDR="memcached"
+      - CONTAINER_SYSLOGDEST="SETME"
+    deploy:
+      restart_policy:
+        condition: on-failure
+  plc_lake_level:
+    image: plc:latest
+    ports:
+      - target: 5502
+        published: 5553
+        protocol: tcp
+        mode: host
     networks:
       - memcached
       - public
@@ -22,11 +62,10 @@ services:
     environment:
       - CONTAINER_SIMULATION="lake-level"
       - CONTAINER_MEMCACHED_ADDR="memcached"
-#      - CONTAINER_SYSLOGDEST="182.22.122.112"
+      - CONTAINER_SYSLOGDEST="SETME"
     deploy:
       restart_policy:
         condition: on-failure
-
 
 networks:
   memcached:

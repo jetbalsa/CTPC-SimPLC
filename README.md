@@ -8,6 +8,12 @@ See the PLCs folder for PLCs
 
 See Sim.php for a server
 
+See things under GAMEMASTER for the backend state
+
+See things under PLCS for the on-network PLCs
+
+and PLC-HONEY is the debug server on port 8080
+
 ## Socatting to a PLC service
 `socat file:plccommand.txt tcp:localhost:502`
 

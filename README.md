@@ -12,7 +12,9 @@ See things under GAMEMASTER for the backend state
 
 See things under PLCS for the on-network PLCs
 
-and PLC-HONEY is the debug server on port 8080
+See PLC-HONEY is the debug server on port 8080
+
+See Supervisor for something that talks to the PLCs and manages the dam
 
 ## Socatting to a PLC service
 `socat file:plccommand.txt tcp:localhost:502`

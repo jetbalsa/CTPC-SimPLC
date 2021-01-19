@@ -1,47 +1,48 @@
-# make sure to update timezone, to build 
-# docker build -t plc .
-# and then we can use compose to run these
-
-FROM alpine:latest
-MAINTAINER noooby
+# FROM alpine:latest as build
+# FROM ubuntu:latest as build
+FROM ubuntu:latest as build
+LABEL maintainer="noooby"
 
 # Environments
 ENV TIMEZONE            America/New_York
 ENV PHP_MEMORY_LIMIT    256M
 
 # Let's roll
-RUN	apk update && \
-	apk upgrade && \
-	apk add zip sqlite socat gd && \
-	mkdir /simulator && \
-	apk add --update tzdata && \
-	cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
-	echo "${TIMEZONE}" > /etc/timezone && \
-	apk add --update \
-		php7-mcrypt \
-		php7-bz2 \
-		php7-openssl \
-		php7-json \
-		php7-pdo \
-		php7-zip \
-		php7-sqlite3 \
-		php7-gd \
-		php7-pdo_sqlite \
-		php7-xmlrpc \
-		php7-bz2 \
-		php7-ctype \
-		php7-curl \
-		php7-fileinfo \
-		php7-pecl-memcache \
-		php7-pecl-memcached
+RUN	apt-get update && \
+	apt-get upgrade -y && \
+	apt-get install -y zip sqlite socat tzdata
 
-COPY PLCs/ /simulator
-COPY launch.sh /launch.sh
+RUN cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
+	echo "${TIMEZONE}" > /etc/timezone
 
-RUN chmod +x /launch.sh /simulator/*.php
+RUN apt-get install -y php \
+		# php-mcrypt \
+		php-bz2 \
+		# php-openssl \
+		php-json \
+		# php-pdo \
+		php-zip \
+		php-sqlite3 \
+		php-gd \
+		# php-pdo_sqlite \
+		php-xmlrpc \
+		php-bz2 \
+		php-ctype \
+		php-curl \
+		php-fileinfo \
+		php-memcache \
+		php-memcached
 
-# Expose ports
-EXPOSE 5502
+FROM build
+
+WORKDIR /simulator
+COPY PLCs/dam/* ./
+COPY GAMEMASTER/dam-gamemaster.php ./dam-gamemaster.php
+COPY SUPERVISORS/dam-supervisor.php ./dam-supervisor.php
+COPY SUPERVISORS/func.php ./func.php
+COPY launch.sh ./launch.sh
+COPY team ./
+RUN chmod +x ./launch.sh ./*.php
 
 # Entry point
-ENTRYPOINT ["/launch.sh"]
+ENTRYPOINT ["sh", "./launch.sh"]

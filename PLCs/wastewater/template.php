@@ -1,6 +1,5 @@
-#!/usr/bin/php
 <?php
-/// tested with socat command line socat tcp-l:2023,reuseaddr,fork exec:./sim.php
+set_time_limit ( 1600);
 /// 111 1 1 0000 0 0000 0 1110 1 1101 1 1100 000
 /// 111 1 1 1011 1 1100 1 1110 1 1110
 ///  STX R P 0 0 RND P RND P CHK ETX
@@ -28,7 +27,10 @@ $fourbit = [
     "1111" => 15
 ];
 
+$m = new Memcached();
+$m->addServer($_ENV["DAM_MEMCACHED_ADDR"], 11211);
 
+checkcrash();
 function checkpar($data, $par)
 {
     $count = substr_count($data, '1');
@@ -59,12 +61,51 @@ function calcpar($data)
 }
 function simcrash($text)
 {
-    logme("SIM CRASH! $text");
+    global $plcname;
+    global $m;
+    //add a crash
+    $crashcount = $m->get($plcname.'-CRASH');
+    if(empty($crashcount)){$crashcount = 0;}
+    $crashcount++;
+    $m->set($plcname.'-CRASH', $crashcount);
+    $m->set($plcname.'-CRASH-TIME', time());
+    if($crashcount > 10){
+        logme("==CRASH AT ABOVE 10, KILLING PLC FOR 10 MINUTES==");
+        $sec = 600;
+    }else{
+        $sec = rand(3,10);
+    }
+    $m->set($plcname.'-CRASH-LEN', $sec);
+    logme("[$crashcount] SIM CRASH! $text - Sleeping for $sec");
+    for ($x = 0; $x <= $sec; $x+=1) {
+        fwrite(STDOUT, random_bytes(5));
+        sleep(1);
+    } 
+    logme("===== Killing PLC and Rebooting!");
+    exit(0);
 }
+function checkcrash(){
+    global $m;
+    global $plcname;
+    $crash = $m->get($plcname.'-CRASH');
+    $crashtime = $m->get($plcname.'-CRASH-TIME');
+    $crashlen = $m->get($plcname.'-CRASH-LEN');
+    if(empty($crashtime)){$crashtime = 0;} 
+    if(empty($crashlen)){$crashlen = 0;}
+    if(time()-$crashlen < $crashtime){
+        logme("=== CRASHED PLC === " . (time()-$crashlen) . " > " . $crashtime );
+        fwrite(STDOUT, random_bytes(5));
+        sleep(1);
+        exit(0);       
+    }
+    
+}
+
 function logme($line)
 {
+    global $plcname;
     $date = date(DATE_ATOM);
-    fwrite(STDERR, "[$date]> $line" . PHP_EOL);
+    fwrite(STDERR, "[$plcname][$date]> $line" . PHP_EOL);
 }
 
 function read_data($data)
@@ -168,7 +209,7 @@ function write_data($type, $port, $number, $mfg1)
 
     $explodingnumbers = explode(".", $number);
     $binnumwhole = sprintf("%07b", abs($explodingnumbers[0]));
-    logme("Wholenumberbin: $binnumwhole");
+    //logme("Wholenumberbin: $binnumwhole");
     if (!empty($explodingnumbers[1])) {
         $binnumnotwhole = sprintf("%07b", substr($explodingnumbers[1], 0, 2));
         $dec = "0";
@@ -178,43 +219,17 @@ function write_data($type, $port, $number, $mfg1)
         $dec = "1";
         $output .= calcpar($binnumwhole . $dec) . calcpar($binnumnotwhole);
     }
-    logme("Wholenumberbin: $dec $binnumnotwhole");
+    //logme("Wholenumberbin: $dec $binnumnotwhole");
     //mfg code
     $output .= calcpar(sprintf("%06b", $mfg1));
-    logme("Mfg1binnum: " . sprintf("%06b", $mfg1));
+    //logme("Mfg1binnum: " . sprintf("%06b", $mfg1));
 
     $chkstring = "000" . $type . $port . $sign . $binnumwhole . $dec . $binnumnotwhole . sprintf("%06b", $mfg1);
     //chksum calc
     $count = substr_count($chkstring, '1');
     $truechksum = $enckey[(int) $count];
-    logme("Chkv $truechksum");
+    //logme("Chkv $truechksum");
     $output .= sprintf("%04b", $truechksum). "111000000";
-    logme("Data Sent: $output");
+    //logme("Data Sent: $output");
     return $output;
 }
-
-function process_logic($input)
-{
-    $res = read_data($input);
-    if ($res !== FALSE) {
-        logme("response OK, " . json_encode($res));
-        if ($res["act"] === "1") {
-            //read a sensor
-            $data = write_data("1", "0000", -12.12, 15);
-            fwrite(STDOUT, pack('H*', base_convert("00" . $data, 2, 16)));
-            return true;
-        }
-        if ($res["act"] === "0") {
-            //set a coil
-            return true;
-        }
-        simcrash("Act Failure? Bailing!");
-        return false;
-    } else {
-        logme("read_data failed, bailing");
-        return false;
-    }
-}
-
-$input = base_convert(bin2hex(fread(STDIN, 6)), 16, 2);
-process_logic($input);

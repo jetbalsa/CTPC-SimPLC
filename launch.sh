@@ -4,15 +4,13 @@ if [ ! -z "$CONTAINER_SYSLOGDEST" ]; then
 	syslogd -R "$CONTAINER_SYSLOGDEST" -D
 fi
 
-
-while true; do socat tcp-l:502,reuseaddr,fork exec:./lake-level.php; sleep 1; done
-
 cd /simulator
+#while true; do socat tcp-l:502,reuseaddr,fork exec:"php lake-level.php"; sleep 1; done
 
 if [ ! -z "$CONTAINER_SIMULATION" ]; then
 	# make it accessible for everything
-	export LAUNCHER_BASE=$(basename "$CONTAINER_SIMULATION"|sed -e "s/\..*//g")
-	export LAUNCHER="$LAUNCHER_BASE.php"
+	export LAUNCHER_BASE=$(basename $CONTAINER_SIMULATION|sed -e "s/\..*//g")
+	export LAUNCHER=$LAUNCHER_BASE.php
 	if [ ! -f "$LAUNCHER" ]; then
 		echo "error invalid simulation type"
 	fi
@@ -21,7 +19,12 @@ if [ ! -z "$CONTAINER_SIMULATION" ]; then
 		if [ -f "/stop" ]; then
 			exit 0
 		else
-			socat "tcp-l:5502,reuseaddr,fork exec:./$LAUNCHER"
+		  echo "Launching $LAUNCHER..."
+		  if [ "$LAUNCHER" = "dam-supervisor.php" ] || [ "$LAUNCHER" = "dam-gamemaster.php" ]; then
+		    php "$LAUNCHER"
+		  else
+			  socat tcp-l:2023,reuseaddr,fork exec:"php $LAUNCHER"
+      fi
 			sleep 2
 		fi
 	done
